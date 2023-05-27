@@ -1,0 +1,15 @@
+{
+  "name": "wasm-fs",
+  "version": "0.1.0",
+  "main": "dist/Main",
+  "repository": "https://github.com/lshqqytiger/wasm-fs.git",
+  "author": "Seunghoon Lee <lshqqytiger@naver.com>",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/Main"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.5",
+    "typescript": "^5.0.4"
+  }
+}

@@ -1,6 +1,12 @@
+<a href="https://www.npmjs.com/package/wasm-fs"><img src="https://img.shields.io/npm/v/wasm-fs.svg?maxAge=3600" alt="npm version" /></a>
+
 # wasm-fs
 
 Extract & Instantiate embedded file structure from WebAssembly.
+
+# Support
+
+- [x] Emscripten SDK
 
 # Installation
 
@@ -38,11 +44,14 @@ import WASMFileSystem from "wasm-fs";
 
 (async () => {
   const wasmFileSystem = await WASMFileSystem.from(
-    readFileSync(resolve(__dirname, "hello.wasm"))
+    fs.readFileSync(resolve(__dirname, "hello.wasm"))
   );
   console.log("root:", wasmFileSystem.root);
   const testDirectory = wasmFileSystem.root.getChild("testDirectory");
   console.log("testDirectory:", testDirectory);
-  writeFileSync("./image.png", testDirectory.getFile("testImage.png").content);
+  fs.writeFileSync(
+    "./image.png",
+    testDirectory.getFile("testImage.png").content
+  );
 })();
 ```

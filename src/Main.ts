@@ -22,14 +22,15 @@ abstract class WASMFileSystemNode {
   public abstract isDirectory(): this is WASMFileSystemDirectory;
   public abstract isFile(): this is WASMFileSystemFile;
 }
-class WASMFileSystemDirectory extends WASMFileSystemNode {
+export class WASMFileSystemDirectory extends WASMFileSystemNode {
   public name: string;
   public isRoot: boolean;
   public children: WASMFileSystemNode[];
-  public constructor(name: string) {
+  public static root = new WASMFileSystemDirectory();
+  public constructor(name?: string) {
     super();
-    this.name = name;
-    this.isRoot = name === "";
+    this.name = name || "";
+    this.isRoot = name === undefined;
     this.children = [];
   }
   public isDirectory(): this is WASMFileSystemDirectory {
@@ -60,12 +61,17 @@ class WASMFileSystemDirectory extends WASMFileSystemNode {
     return node;
   }
   public findChild(name: string) {
-    return this.children.find((v) => v.name === name && v.isDirectory()) as
-      | WASMFileSystemDirectory
-      | undefined;
+    const node = this.children.find((v) => v.name === name && v.isDirectory());
+    assert(node === undefined || node instanceof WASMFileSystemDirectory);
+    return node;
+  }
+  public findFile(name: string) {
+    const node = this.children.find((v) => v.name === name && v.isFile());
+    assert(node === undefined || node instanceof WASMFileSystemFile);
+    return node;
   }
 }
-class WASMFileSystemFile extends WASMFileSystemNode {
+export class WASMFileSystemFile extends WASMFileSystemNode {
   public location: string;
   public name: string;
   private heap: Heap;
@@ -113,7 +119,7 @@ export default class WASMFileSystem {
   private memory!: WebAssembly.Memory;
   private heap!: Heap;
 
-  public root = new WASMFileSystemDirectory("");
+  public root = WASMFileSystemDirectory.root;
   private constructor(wasi: WASI, wasm: WebAssembly.Module) {
     this.wasi = wasi;
     this.wasm = wasm;
@@ -132,7 +138,6 @@ export default class WASMFileSystem {
           throw new Error("Abort called from wasm file");
         },
         _emscripten_fs_load_embedded_files(pointer: number) {
-          console.log(pointer);
           fs.embeddedFilePointer = pointer;
         },
       },

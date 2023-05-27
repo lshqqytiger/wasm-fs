@@ -1,6 +1,6 @@
 {
   "name": "wasm-fs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/Main",
   "repository": "https://github.com/lshqqytiger/wasm-fs.git",
   "author": "Seunghoon Lee <lshqqytiger@naver.com>",

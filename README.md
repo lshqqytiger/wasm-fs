@@ -63,6 +63,25 @@ import WASMFileSystem from "wasm-fs";
 
 Not Implemented Yet.
 
+# FAQ
+
+## Q: I'm getting `ModuleNotFoundError: Couldn't find required module "MODULE_NAME".`
+
+A: It means your .wasm file requires `MODULE_NAME` key in the `importObject`. (second argument of `WASMFileSystem.from`)
+If you know what should be there, import that through `importObject`.
+If you don't, consider using `VoidFunctionRecord`.
+
+```ts
+import WASMFileSystem, { VoidFunctionRecord } from "wasm-fs";
+
+const fs = await WASMFileSystem.from(
+  readFileSync(resolve(__dirname, "hello.wasm")),
+  {
+    MODULE_NAME: VoidFunctionRecord,
+  }
+);
+```
+
 # License
 
 MIT License

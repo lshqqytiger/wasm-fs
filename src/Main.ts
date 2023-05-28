@@ -1,5 +1,10 @@
 import { WASI } from "wasi";
 
+import {
+  ModuleNotFoundError,
+  NotImplementedError,
+  UnknownError,
+} from "./Error";
 import { assert } from "./Utility";
 
 declare module "wasi" {
@@ -26,6 +31,15 @@ Object.defineProperty(WebAssembly.Instance.prototype, "exports", {
     return exports;
   },
 });
+
+export const VoidFunctionRecord = new Proxy(
+  {},
+  {
+    get() {
+      return function () {};
+    },
+  }
+);
 
 // Union
 interface Heap {
@@ -148,19 +162,34 @@ export default class WASMFileSystem {
     });
     const wasm = await WebAssembly.compile(buffer);
     const fs = new WASMFileSystem(wasi, wasm);
-    const instance = await WebAssembly.instantiate(wasm, {
-      env: {
-        abort() {
-          throw new Error("Abort called from wasm file");
+    try {
+      const instance = await WebAssembly.instantiate(wasm, {
+        env: {
+          abort() {
+            throw new Error("Abort called from wasm file");
+          },
+          _emscripten_fs_load_embedded_files(pointer: number) {
+            fs.embeddedFilePointer = pointer;
+          },
         },
-        _emscripten_fs_load_embedded_files(pointer: number) {
-          fs.embeddedFilePointer = pointer;
-        },
-      },
-      ...wasi.getImportObject(),
-      ...importObject,
-    });
-    fs.start(instance);
+        ...wasi.getImportObject(),
+        ...importObject,
+      });
+      fs.start(instance);
+    } catch (e) {
+      const str = String(e);
+      if (str.includes("error: module is not an object or function")) {
+        const matched = str.match(/module="([^"]+)"/);
+        throw matched
+          ? new ModuleNotFoundError(
+              `Couldn't find required module "${matched[1]}". Please check FAQ in README if you don't know what it means.`
+            )
+          : new UnknownError(
+              "Failed to find required module from error message. Please create an issue."
+            );
+      }
+      throw new NotImplementedError("Unsupported wasm format.");
+    }
     let pointer = fs.embeddedFilePointer;
     if (pointer !== undefined) {
       do {

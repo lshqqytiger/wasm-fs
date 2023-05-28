@@ -11,6 +11,22 @@ declare module "wasi" {
   }
 }
 
+const _wasmInstanceExportsGetter = Object.getOwnPropertyDescriptors(
+  WebAssembly.Instance.prototype
+).exports.get!;
+Object.defineProperty(WebAssembly.Instance.prototype, "exports", {
+  get() {
+    const exports: WebAssembly.Exports = {
+      ..._wasmInstanceExportsGetter.call(this),
+    };
+    if (!exports.memory && !exports._start && exports.mem && exports.run) {
+      exports.memory = exports.mem;
+      exports._start = exports.run;
+    }
+    return exports;
+  },
+});
+
 // Union
 interface Heap {
   u32: Uint32Array;
@@ -124,7 +140,7 @@ export default class WASMFileSystem {
     this.wasi = wasi;
     this.wasm = wasm;
   }
-  public static async from(buffer: Buffer) {
+  public static async from(buffer: Buffer, importObject?: WebAssembly.Imports) {
     const wasi = new WASI({
       version: "preview1",
       args: process.argv,
@@ -142,22 +158,27 @@ export default class WASMFileSystem {
         },
       },
       ...wasi.getImportObject(),
+      ...importObject,
     });
     fs.start(instance);
     let pointer = fs.embeddedFilePointer;
-    do {
-      const file = new WASMFileSystemFile(fs.heap, pointer);
-      const location = file.location.split("/");
-      let parent = fs.root;
-      let i = 1;
+    if (pointer !== undefined) {
       do {
-        const name = location[i];
-        if (!parent.has(name))
-          parent.children.push(
-            i === location.length - 1 ? file : new WASMFileSystemDirectory(name)
-          );
-      } while ((parent = parent.findChild(location[i++])!));
-    } while (fs.heap.u32[(pointer += 12) >> 2]);
+        const file = new WASMFileSystemFile(fs.heap, pointer);
+        const location = file.location.split("/");
+        let parent = fs.root;
+        let i = 1;
+        do {
+          const name = location[i];
+          if (!parent.has(name))
+            parent.children.push(
+              i === location.length - 1
+                ? file
+                : new WASMFileSystemDirectory(name)
+            );
+        } while ((parent = parent.findChild(location[i++])!));
+      } while (fs.heap.u32[(pointer += 12) >> 2]);
+    }
     return fs;
   }
   private start(instance: WebAssembly.Instance) {

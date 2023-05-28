@@ -7,6 +7,7 @@ Extract & Instantiate embedded file structure from WebAssembly.
 # Support
 
 - [x] Emscripten SDK
+- [ ] Go
 
 # Installation
 
@@ -22,19 +23,21 @@ $ yarn add wasm-fs
 
 # Example
 
-## Generate WASM with embedded file
+## Emscripten SDK
+
+### Generate WASM with embedded file
 
 ```
 $ emcc hello.c -s STANDALONE_WASM -o hello.html --embed-file embedded_file
 ```
 
-## Generate WASM with embedded directory
+### Generate WASM with embedded directory
 
 ```
 $ emcc hello.c -s STANDALONE_WASM -o hello.html --embed-file embedded_dir
 ```
 
-## Extract embedded file structure from WASM
+### Extract embedded file structure from WASM
 
 ```ts
 import fs from "fs";
@@ -55,3 +58,13 @@ import WASMFileSystem from "wasm-fs";
   );
 })();
 ```
+
+## Go
+
+Not Implemented Yet.
+
+# License
+
+MIT License
+
+Copyright (c) 2023 이승훈

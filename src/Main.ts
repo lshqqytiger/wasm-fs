@@ -154,13 +154,19 @@ export default class WASMFileSystem {
     this.wasi = wasi;
     this.wasm = wasm;
   }
-  public static async from(buffer: Buffer, importObject?: WebAssembly.Imports) {
+  public static async from(
+    target: Buffer | WebAssembly.Module,
+    importObject?: WebAssembly.Imports
+  ) {
     const wasi = new WASI({
       version: "preview1",
       args: process.argv,
       env: process.env,
     });
-    const wasm = await WebAssembly.compile(buffer);
+    const wasm =
+      target instanceof WebAssembly.Module
+        ? target
+        : await WebAssembly.compile(target);
     const fs = new WASMFileSystem(wasi, wasm);
     try {
       const instance = await WebAssembly.instantiate(wasm, {
